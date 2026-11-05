@@ -3,6 +3,7 @@
 // Runs on Vercel so the API key never reaches the browser. Nothing here deletes or edits what's already there.
 import Anthropic from '@anthropic-ai/sdk';
 import { NOTION_TOOLS, notionOn, runNotion } from '../lib/notion.mjs';
+import { CALENDAR_TOOLS, calendarOn, runCalendar } from '../lib/gcal.mjs';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || '').trim().replace(/\/$/, '');
 const SUPABASE_KEY = (process.env.SUPABASE_PUBLISHABLE_KEY || '').trim();
@@ -106,6 +107,7 @@ const slotNow = c => { const h = Number(new Date().toLocaleString('en-US', { tim
 async function runTool(name, input, ctx) {
   const { q, c } = ctx;
   if (name.startsWith('notion_')) return runNotion(name, input);
+  if (name.startsWith('calendar_')) return runCalendar(name, input, c);
   const since = days => c.shift(-(days - 1));
   if (name === 'read_app_data') {
     const from = since(input.days), fromTs = from + 'T00:00:00Z', out = {};
@@ -208,7 +210,8 @@ How to work:
 - Log when the person tells you something happened ("158.4 this morning", "spent 12 at Chipotle", "30 minutes on the treadmill", "read 20 pages", "today was a 7"). Pick the right tool, fill what they said, and confirm in one short line what you logged and where. Several things in one message means several tool calls.
 - If something needed to log is unclear (which book, which exercise, an amount), ask one short question instead of guessing. For food without numbers, estimate a normal portion and say the figures are estimates.
 - Notion (when connected): find pages with notion_search before reading or writing; read before summarising. Create new pages where the person says, or under the page that fits best; if nothing fits, ask where. Add to an existing page with notion_add_to_page rather than creating a duplicate. Give the link when you create or add something.
-- You cannot delete or edit existing records. If they ask, say so and point them to the app where they can do it.
+- Calendar (when connected): their Google Calendar, which also shows in Apple Calendar. Read it for what's on, free time and when things are; turn "tomorrow", "Friday", "next week" into dates from today. When adding an event, use the time they said in their own time zone, default to an hour, and confirm the day, date and time. If the time is unclear ("Friday evening"), ask.
+- You cannot delete or edit existing records, or move or delete calendar events. If they ask, say so and point them to the app where they can do it.
 - Be brief, warm and plain: a sentence or two for logs, a short paragraph or a few bullets for questions. No emoji, no exclamation marks. Use their units and dates relative to today ("yesterday", "last Tuesday").
 - Do not give medical or financial advice beyond what their own numbers show. If they mention a crisis or self-harm, say gently that you are not the right help and suggest reaching out to someone they trust or a crisis line.`;
 
@@ -247,8 +250,9 @@ export default async function handler(request, response) {
     { type: 'text', text },
   ] });
 
-  const tools = notionOn() ? [...TOOLS, ...NOTION_TOOLS] : TOOLS;
+  const tools = [...TOOLS, ...(notionOn() ? NOTION_TOOLS : []), ...(calendarOn() ? CALENDAR_TOOLS : [])];
   if (!notionOn()) messages.at(-1).content[0].text += ' [Notion is not connected yet: if they ask about Notion, say it needs a NOTION_TOKEN set in Jarvis\'s Vercel settings.]';
+  if (!calendarOn()) messages.at(-1).content[0].text += ' [The calendar is not connected yet: if they ask about their schedule, say it needs GOOGLE_SERVICE_ACCOUNT and GOOGLE_CALENDAR_ID set in Jarvis\'s Vercel settings.]';
   const workspace = (process.env.ANTHROPIC_WORKSPACE_ID || '').trim();
   const client = new Anthropic(workspace ? { defaultHeaders: { 'anthropic-workspace-id': workspace } } : {});
   const actions = [];
