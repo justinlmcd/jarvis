@@ -4,7 +4,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const APP_NAMES={body:'BODY',money:'MONEY',gym:'GYM',meal:'MEAL',write:'WRITE',read:'READ',sleep:'SLEEP'};
+const APP_NAMES={body:'BODY',money:'MONEY',gym:'GYM',meal:'MEAL',write:'WRITE',read:'READ',sleep:'SLEEP',notion:'NOTION'};
 
 let client=null,user=null,authSub=null,connecting=null,storageCleanup=null,busy=false,signingIn=false,loadId=0;
 
@@ -61,7 +61,7 @@ function bubble(role,text,actions=[],error=false){
   $('hello').hidden=true;
   const el=document.createElement('div'); el.className=`msg ${role==='user'?'me':'jarvis'}${error?' err':''}`;
   el.innerHTML=role==='user'?`<p>${esc(text).replace(/\n/g,'<br>')}</p>`:format(text);
-  if(actions?.length) el.insertAdjacentHTML('beforeend',`<div class="logged" aria-label="Logged">${actions.map(a=>`<span style="--c:var(--app-${esc(a.app)})"><b>${esc(APP_NAMES[a.app]||a.app)}</b>${esc(a.text)}</span>`).join('')}</div>`);
+  if(actions?.length) el.insertAdjacentHTML('beforeend',`<div class="logged" aria-label="Logged">${actions.map(a=>{ const inner=`<b>${esc(APP_NAMES[a.app]||a.app)}</b>${esc(a.text)}`, link=/^https:\/\/((www|app)\.)?notion\.(so|com)\//.test(a.url||''); return `<span style="--c:var(--app-${esc(a.app)})">${link?`<a href="${esc(a.url)}" target="_blank" rel="noopener">${inner} ↗</a>`:inner}</span>`; }).join('')}</div>`);
   $('chat').appendChild(el); scrollDown(); return el;
 }
 function clearChat(){ for(const el of [...$('chat').querySelectorAll('.msg,.typing')]) el.remove(); $('hello').hidden=false; }

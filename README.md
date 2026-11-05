@@ -21,8 +21,20 @@ Jarvis can't delete or change what's already logged; it tells you which app to d
 
 - `index.html`, `jarvis.js` — the chat
 - `api/jarvis.mjs` — Jarvis and its tools
+- `lib/notion.mjs` — the Notion tools
 - `api/config.js` — the public Supabase settings and YOU's address
 - `settings.js` — YOU's settings, shared by every app
 - `jarvis.sql` — the `jarvis_messages` table
 
-Next: Notion (search, read and create pages) and Google Calendar (read your schedule, add events).
+## Notion
+
+Jarvis can search your Notion, read pages and databases, create pages (under a page, or as a new entry in a database with its columns filled in) and add to the end of a page. It never deletes, archives or changes what's already there, and it only sees the pages you share with it.
+
+1. In Notion: **Settings → Connections → Develop or manage integrations** (or notion.so/profile/integrations) → **New integration**. Name it **Jarvis**, pick your workspace, type **Internal**, save.
+2. Copy its **Internal Integration Secret** (starts with `ntn_`).
+3. Give it your pages: on the integration's **Access** tab, pick the pages Jarvis may use (sub-pages come with them). Or on any page: **•••** → **Connections** → **Jarvis**.
+4. In Vercel, add `NOTION_TOKEN` with that secret to the jarvis project and redeploy.
+
+Then try "What's in my Project Planner?" or "Make a page for Sarah's 12-week program under Second Brain". The code is in `lib/notion.mjs`.
+
+Next: Google Calendar (read your schedule, add events).

@@ -2,6 +2,7 @@
 // as you. Every read and write goes to Supabase with your own sign-in, so row security keeps it to your data.
 // Runs on Vercel so the API key never reaches the browser. Nothing here deletes or edits what's already there.
 import Anthropic from '@anthropic-ai/sdk';
+import { NOTION_TOOLS, notionOn, runNotion } from '../lib/notion.mjs';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || '').trim().replace(/\/$/, '');
 const SUPABASE_KEY = (process.env.SUPABASE_PUBLISHABLE_KEY || '').trim();
@@ -87,6 +88,7 @@ function invalid(tool, input) {
     const p = s.properties[k]; if (!p) return `Unknown field ${k}.`;
     if (p.type === 'string' && typeof v !== 'string') return `${k} must be text.`;
     if ((p.type === 'number' || p.type === 'integer') && (typeof v !== 'number' || !Number.isFinite(v))) return `${k} must be a number.`;
+    if (p.type === 'object' && (typeof v !== 'object' || Array.isArray(v))) return `${k} must be an object.`;
     if (p.type === 'integer' && !Number.isInteger(v)) return `${k} must be a whole number.`;
     if (p.enum && !p.enum.includes(v)) return `${k} must be one of ${p.enum.join(', ')}.`;
     if (p.minimum !== undefined && v < p.minimum) return `${k} is too small.`;
@@ -103,6 +105,7 @@ const slotNow = c => { const h = Number(new Date().toLocaleString('en-US', { tim
 // Runs one tool. Returns { result } for Claude, and { action } for the chat when something was logged.
 async function runTool(name, input, ctx) {
   const { q, c } = ctx;
+  if (name.startsWith('notion_')) return runNotion(name, input);
   const since = days => c.shift(-(days - 1));
   if (name === 'read_app_data') {
     const from = since(input.days), fromTs = from + 'T00:00:00Z', out = {};
@@ -204,6 +207,7 @@ How to work:
 - Answer from their data, never from guesses. Read the apps a question needs with read_app_data first; for questions that connect apps (sleep and workouts, spending and mood), read each one. Quote real numbers and dates.
 - Log when the person tells you something happened ("158.4 this morning", "spent 12 at Chipotle", "30 minutes on the treadmill", "read 20 pages", "today was a 7"). Pick the right tool, fill what they said, and confirm in one short line what you logged and where. Several things in one message means several tool calls.
 - If something needed to log is unclear (which book, which exercise, an amount), ask one short question instead of guessing. For food without numbers, estimate a normal portion and say the figures are estimates.
+- Notion (when connected): find pages with notion_search before reading or writing; read before summarising. Create new pages where the person says, or under the page that fits best; if nothing fits, ask where. Add to an existing page with notion_add_to_page rather than creating a duplicate. Give the link when you create or add something.
 - You cannot delete or edit existing records. If they ask, say so and point them to the app where they can do it.
 - Be brief, warm and plain: a sentence or two for logs, a short paragraph or a few bullets for questions. No emoji, no exclamation marks. Use their units and dates relative to today ("yesterday", "last Tuesday").
 - Do not give medical or financial advice beyond what their own numbers show. If they mention a crisis or self-harm, say gently that you are not the right help and suggest reaching out to someone they trust or a crisis line.`;
@@ -243,6 +247,8 @@ export default async function handler(request, response) {
     { type: 'text', text },
   ] });
 
+  const tools = notionOn() ? [...TOOLS, ...NOTION_TOOLS] : TOOLS;
+  if (!notionOn()) messages.at(-1).content[0].text += ' [Notion is not connected yet: if they ask about Notion, say it needs a NOTION_TOKEN set in Jarvis\'s Vercel settings.]';
   const workspace = (process.env.ANTHROPIC_WORKSPACE_ID || '').trim();
   const client = new Anthropic(workspace ? { defaultHeaders: { 'anthropic-workspace-id': workspace } } : {});
   const actions = [];
@@ -252,7 +258,7 @@ export default async function handler(request, response) {
       const res = await client.beta.messages.create({
         model: 'claude-opus-5-5', max_tokens: 16000,
         betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default',
-        system: SYSTEM, tools: TOOLS, messages,
+        system: SYSTEM, tools, messages,
         output_config: { effort: 'low' },
       });
       if (res.stop_reason === 'refusal') { reply = 'I can\'t help with that one.'; break; }
@@ -263,7 +269,7 @@ export default async function handler(request, response) {
       messages.push({ role: 'assistant', content: res.content });
       const results = [];
       for (const use of uses) {
-        const tool = TOOLS.find(t => t.name === use.name), bad = tool ? invalid(tool, use.input) : 'Unknown tool.';
+        const tool = tools.find(t => t.name === use.name), bad = tool ? invalid(tool, use.input) : 'Unknown tool.';
         if (bad) { results.push({ type: 'tool_result', tool_use_id: use.id, is_error: true, content: bad }); continue; }
         try {
           const out = await runTool(use.name, use.input, { q, c });
