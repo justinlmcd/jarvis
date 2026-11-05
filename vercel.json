@@ -1,0 +1,8 @@
+{
+  "cleanUrls": true,
+  "functions": {
+    "api/jarvis.mjs": {
+      "maxDuration": 120
+    }
+  }
+}

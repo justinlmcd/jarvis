@@ -1,0 +1,8 @@
+{
+  "name": "jarvis",
+  "private": true,
+  "version": "0.1.0",
+  "description": "JARVIS. Ask about your apps and log to them by chat or voice: YOU, BODY, MONEY, GYM, MEAL, WRITE, READ, SLEEP.",
+  "scripts": { "dev": "node dev.js" },
+  "dependencies": { "@anthropic-ai/sdk": "^0.133.0" }
+}

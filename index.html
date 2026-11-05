@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="JARVIS">
+<meta name="theme-color" content="#070b0b">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
+<link rel="manifest" href="/manifest.json">
+<title>JARVIS · Ask and log</title>
+<style>
+:root{color-scheme:dark;--bg:#070b0b;--ink:#eef6f5;--muted:#9fb3b0;--faint:#7f918f;--line:#1c2827;--line2:#2a3836;--panel:#0d1413;--field:#0f1716;--raised:#121b1a;--mint:#7fe0d6;--accent:#7fe0d6;--on-accent:#06201d;--error:#ff9f9f;--good:#9be39f;--sans:Inter,"Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Consolas,monospace;
+--app-body:#8fd3ff;--app-money:#8fe3b0;--app-gym:#ff9b9b;--app-meal:#c9a7ff;--app-write:#ffd98a;--app-read:#ffb86b;--app-sleep:#9aa8ff}
+:root[data-theme=light]{color-scheme:light;--bg:#f4f8f7;--ink:#111a19;--muted:#55635f;--faint:#7a8784;--line:#dde6e4;--line2:#cbd7d4;--panel:#ffffff;--field:#ffffff;--raised:#ffffff;--mint:#0f766e;--accent:#0f766e;--on-accent:#ffffff;--error:#b3261e;--good:#1b7a43;
+--app-body:#1d74b5;--app-money:#1b8a50;--app-gym:#cc3f37;--app-meal:#7347cc;--app-write:#9a6c00;--app-read:#c25f0e;--app-sleep:#4b58d1}
+*{box-sizing:border-box}[hidden]{display:none!important}html{-webkit-text-size-adjust:100%;height:100%}
+body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
+button,input,textarea{font:inherit;color:inherit}button{cursor:pointer}button:disabled{cursor:default;opacity:.5}
+:focus-visible{outline:2px solid var(--mint);outline-offset:3px}a{color:var(--mint)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(14px + env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) 14px max(18px,env(safe-area-inset-left));border-bottom:1px solid var(--line);background:linear-gradient(180deg,color-mix(in srgb,var(--mint) 6%,transparent),transparent)}
+.brand-row{display:flex;align-items:center;gap:10px}.brand{font-size:24px;font-weight:800;letter-spacing:-.07em}.brand span{color:var(--mint)}
+.icon-link{display:grid;place-items:center;width:32px;height:32px;border:1px solid var(--line2);border-radius:8px;color:var(--muted);text-decoration:none;background:transparent}.icon-link:hover{color:var(--mint);border-color:var(--mint)}.icon-link svg{width:16px;height:16px}
+.top-right{display:flex;align-items:center;gap:12px}.status{font-size:12px;color:var(--muted)}.status.on:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--mint);margin-right:7px;vertical-align:1px}
+.text-button{border:0;background:transparent;padding:6px 0;color:var(--muted);font-size:13px}.text-button:hover{color:var(--mint)}
+.quiet-button{border:1px solid var(--line2);border-radius:8px;padding:7px 13px;background:transparent;font-size:13px;font-weight:550}.quiet-button:hover{border-color:var(--mint);color:var(--mint)}
+.toggle[aria-pressed=true]{color:var(--mint);border-color:var(--mint)}
+main{flex:1;overflow-y:auto;overscroll-behavior:contain}
+.chat{max-width:760px;margin:0 auto;padding:24px max(18px,env(safe-area-inset-right)) 24px max(18px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:14px}
+.hello{padding:8vh 0 10px}.hello h1{font-size:clamp(44px,9vw,72px);letter-spacing:-.07em;line-height:.95;margin:0 0 14px;font-weight:700}.hello h1 span{color:var(--mint)}
+.hello p{color:var(--muted);margin:0 0 20px;max-width:520px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{border:1px solid var(--line2);border-radius:999px;background:var(--panel);padding:8px 13px;font-size:13.5px}.chip:hover{border-color:var(--mint);color:var(--mint)}
+.msg{max-width:88%;padding:11px 15px;border-radius:16px;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;background:color-mix(in srgb,var(--mint) 16%,var(--panel));border-bottom-right-radius:5px}
+.msg.jarvis{align-self:flex-start;background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:5px}
+.msg p{margin:0 0 8px}.msg p:last-child{margin:0}.msg ul{margin:4px 0 8px;padding-left:20px}.msg li{margin:2px 0}
+.msg.err{border-color:color-mix(in srgb,var(--error) 50%,var(--line));color:var(--error)}
+.logged{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}.logged span{font:12px var(--mono);border:1px solid var(--line2);border-left:3px solid var(--c);border-radius:6px;padding:3px 8px;color:var(--muted)}.logged b{color:var(--c);font-weight:600;margin-right:6px}
+.typing{align-self:flex-start;display:flex;gap:5px;padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-radius:16px;border-bottom-left-radius:5px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--mint);opacity:.35;animation:blink 1.2s infinite}.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+@keyframes blink{40%{opacity:1}}@media(prefers-reduced-motion:reduce){.typing i{animation:none;opacity:.7}}
+.composer{border-top:1px solid var(--line);background:var(--bg);padding:12px max(14px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
+.composer form{max-width:760px;margin:0 auto;display:flex;align-items:flex-end;gap:8px}
+textarea{flex:1;resize:none;min-height:46px;max-height:160px;border:1px solid var(--line2);border-radius:14px;background:var(--field);padding:12px 14px;outline:none;line-height:1.4}textarea:focus{border-color:var(--mint)}
+.round{flex:none;width:46px;height:46px;border-radius:50%;border:1px solid var(--line2);background:var(--panel);display:grid;place-items:center;color:var(--muted)}.round svg{width:19px;height:19px}
+.round.send{background:var(--mint);border-color:var(--mint);color:var(--on-accent)}.round.listening{color:var(--error);border-color:var(--error);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--error) 20%,transparent)}}
+.note{max-width:760px;margin:6px auto 0;font-size:12px;color:var(--faint);min-height:1em}.note.error{color:var(--error)}
+dialog{color:var(--ink);background:var(--raised);border:1px solid var(--line2);border-radius:14px;width:min(420px,calc(100% - 28px));padding:26px}::backdrop{background:#000a;backdrop-filter:blur(6px)}
+dialog h2{margin:0 0 6px;font-size:26px;letter-spacing:-.04em}dialog p{color:var(--muted);margin:0 0 18px;font-size:14px}
+.field{display:block;margin-bottom:14px}.field span{display:block;font-size:13px;font-weight:550;margin-bottom:6px}.field input{width:100%;border:1px solid var(--line2);border-radius:8px;background:var(--field);padding:11px 12px}
+.primary{width:100%;border:0;border-radius:8px;background:var(--mint);color:var(--on-accent);font-weight:650;padding:12px}
+.close{float:right;border:0;background:transparent;color:var(--muted);font-size:24px;line-height:1}
+.message{font-size:13px;color:var(--muted);margin:10px 0 0}.message.error{color:var(--error)}
+@media(max-width:520px){.status{display:none}.msg{max-width:94%}.hello{padding-top:5vh}}
+</style>
+<script src="/settings.js" data-accent="own"></script>
+</head>
+<body>
+<header class="top">
+  <div class="brand-row"><div class="brand" aria-label="JARVIS">JARVIS<span>.</span></div>
+    <a class="icon-link" id="home-link" href="#" aria-label="Home" title="YOU"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5.5 10v9.5h13V10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <a class="icon-link" id="settings-link" href="#" aria-label="Settings" title="Settings (in YOU)"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></a>
+  </div>
+  <div class="top-right">
+    <span class="status" id="status">Not signed in</span>
+    <button class="icon-link toggle" id="speak" type="button" aria-pressed="false" title="Read answers out loud" aria-label="Read answers out loud"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+    <button class="text-button" id="clear" type="button" hidden>Clear</button>
+    <button class="quiet-button" id="connect-open" type="button">Sign in</button>
+    <button class="text-button" id="sign-out" type="button" hidden>Sign out</button>
+  </div>
+</header>
+<main id="scroller">
+  <div class="chat" id="chat" aria-live="polite">
+    <section class="hello" id="hello">
+      <h1>Hey<span>.</span></h1>
+      <p id="hello-text">Sign in with your YOU login to start.</p>
+      <div class="chips" id="chips">
+        <button class="chip" type="button">How did I sleep this week?</button>
+        <button class="chip" type="button">What did I spend on food this month?</button>
+        <button class="chip" type="button">Am I on pace for my goals?</button>
+        <button class="chip" type="button">Log 158.4</button>
+        <button class="chip" type="button">30 minutes on the treadmill, 3 miles</button>
+        <button class="chip" type="button">Today was an 8, great gym session</button>
+      </div>
+    </section>
+  </div>
+</main>
+<footer class="composer">
+  <form id="ask">
+    <textarea id="input" rows="1" placeholder="Ask or log something…" aria-label="Message Jarvis" enterkeyhint="send" disabled></textarea>
+    <button class="round" id="mic" type="button" aria-label="Speak" title="Speak" hidden><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="3.5" width="6" height="11" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+    <button class="round send" id="send" type="submit" aria-label="Send" disabled><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </form>
+  <p class="note" id="note" role="status"></p>
+</footer>
+<dialog id="connection-dialog" aria-labelledby="connect-title"><button class="close" id="connect-close" type="button" aria-label="Close">×</button><h2 id="connect-title">Sign in.</h2><p>Same login as YOU and every other app.</p>
+<form id="connect-form"><label class="field"><span>Email</span><input id="email" type="email" autocomplete="username" required></label><label class="field"><span>Password</span><input id="password" type="password" autocomplete="current-password" required></label><button class="primary" id="connect-submit" type="submit">Sign in</button><p class="message" id="connect-message" role="status"></p></form></dialog>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
+<script src="/jarvis.js"></script>
+</body>
+</html>
