@@ -116,6 +116,7 @@ button,input,textarea{font:inherit;color:inherit}button{cursor:pointer;backgroun
 .drawer.open{transform:none}@media(prefers-reduced-motion:reduce){.drawer{transition:none}}
 .drawer header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line)}.drawer header h2{margin:0;font:700 13px var(--display);letter-spacing:.24em;color:var(--cyan)}
 .drawer header div{display:flex;gap:8px;align-items:center}.drawer .txt{color:var(--muted);font-size:12.5px}.drawer .txt:hover{color:var(--cyan)}
+.voice-pick{max-width:150px;border:1px solid var(--line2);border-radius:9px;background:rgba(8,22,38,.9);color:var(--muted);padding:7px 8px;font-size:12px}
 .toggle[aria-pressed=true]{color:var(--cyan);border-color:var(--cyan)}
 .chat{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
 .msg{max-width:90%;padding:10px 13px;border-radius:12px;overflow-wrap:anywhere;line-height:1.5}.msg.me{align-self:flex-end;background:rgba(47,216,255,.14);border:1px solid rgba(47,216,255,.25);border-bottom-right-radius:4px}
@@ -214,6 +215,7 @@ body.focus .grid>.panel:not(.core){display:none}body.focus .grid>.core{grid-colu
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" aria-label="Conversation" aria-hidden="true">
   <header><h2>CONVERSATION</h2><div>
+    <select id="voice-pick" class="voice-pick" aria-label="Jarvis's voice" title="Jarvis's voice" hidden></select>
     <button class="sq toggle" id="speak" type="button" aria-pressed="false" title="Read answers out loud" aria-label="Read answers out loud"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
     <button class="txt" id="clear" type="button">Clear</button>
     <button class="sq" id="drawer-close" type="button" aria-label="Close (Esc)"><svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div></header>
