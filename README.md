@@ -22,6 +22,7 @@ Jarvis can't delete or change what's already logged; it tells you which app to d
 - `index.html`, `jarvis.js` — the chat
 - `api/jarvis.mjs` — Jarvis and its tools
 - `lib/notion.mjs` — the Notion tools
+- `lib/gcal.mjs` — the Google Calendar tools
 - `api/config.js` — the public Supabase settings and YOU's address
 - `settings.js` — YOU's settings, shared by every app
 - `jarvis.sql` — the `jarvis_messages` table
@@ -37,4 +38,16 @@ Jarvis can search your Notion, read pages and databases, create pages (under a p
 
 Then try "What's in my Project Planner?" or "Make a page for Sarah's 12-week program under Second Brain". The code is in `lib/notion.mjs`.
 
-Next: Google Calendar (read your schedule, add events).
+## Google Calendar
+
+Jarvis reads your schedule ("what's on tomorrow?", "when am I free Thursday afternoon?", "when's my dentist appointment?") and adds events ("put leg day at 6pm Friday", "block Saturday morning for meal prep"), in your time zone from YOU's settings. It never moves or deletes events. Add your Google account to your iPhone (**Settings → Calendar → Accounts → Add Account → Google**, Calendars on) and the events show in Apple Calendar too.
+
+It signs in as a Google *service account* that you share your calendar with, so it keeps working without signing in again:
+
+1. **Google Cloud project:** at console.cloud.google.com, create a project (e.g. "Jarvis").
+2. **Turn on the API:** **APIs & Services → Library → Google Calendar API → Enable**.
+3. **Service account:** **IAM & Admin → Service Accounts → Create service account**, name it `jarvis`, skip the optional steps. Open it → **Keys → Add key → Create new key → JSON**. A `.json` file downloads; keep it private.
+4. **Share your calendar with it:** in Google Calendar on the web, **Settings → (your calendar) → Share with specific people → Add people**, paste the service account's email (`jarvis@…iam.gserviceaccount.com`, also in the JSON as `client_email`), permission **Make changes to events**.
+5. **Vercel** (jarvis project → Settings → Environment Variables): `GOOGLE_SERVICE_ACCOUNT` = the whole contents of the JSON file; `GOOGLE_CALENDAR_ID` = your Gmail address (your main calendar's id; several ids, comma-separated, are all read, and events go to the first). Redeploy.
+
+The code is in `lib/gcal.mjs`.
