@@ -5,11 +5,11 @@ const {readFile} = require('node:fs/promises');
 const path = require('node:path');
 const config = require('./api/config');
 const port = Number(process.env.JARVIS_PORT || 8804);
-const pages = {'/':'index.html','/index.html':'index.html','/jarvis.js':'jarvis.js','/settings.js':'settings.js','/icon-180.png':'icon-180.png','/icon-512.png':'icon-512.png','/icon.svg':'icon.svg','/manifest.json':'manifest.json'};
+const pages = {'/':'index.html','/index.html':'index.html','/jarvis.js':'jarvis.js','/dashboard.js':'dashboard.js','/settings.js':'settings.js','/icon-180.png':'icon-180.png','/icon-512.png':'icon-512.png','/icon.svg':'icon.svg','/manifest.json':'manifest.json'};
 http.createServer(async (request, response) => {
   const pathname = new URL(request.url, 'http://localhost').pathname;
   if (pathname === '/api/config') return config(request, response);
-  if (pathname === '/api/jarvis') { response.writeHead(503, {'Content-Type':'application/json'}); return response.end(JSON.stringify({error:'Jarvis answers on Vercel, not in the local preview.'})); }
+  if (pathname === '/api/jarvis' || pathname === '/api/today') { response.writeHead(503, {'Content-Type':'application/json'}); return response.end(JSON.stringify({error:'Jarvis answers on Vercel, not in the local preview.'})); }
   if (request.method !== 'GET' || !Object.hasOwn(pages, pathname)) { response.writeHead(404, {'Content-Type':'text/plain'}); return response.end('Not found'); }
   try {
     const body = await readFile(path.join(__dirname, pages[pathname]));
