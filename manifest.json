@@ -4,8 +4,8 @@
   "description": "Ask about your apps and log to them",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#070b0b",
+  "background_color": "#040a13",
+  "theme_color": "#050b14",
   "icons": [
     { "src": "/icon-180.png", "sizes": "180x180", "type": "image/png" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

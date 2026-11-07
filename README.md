@@ -1,12 +1,30 @@
 # JARVIS.
 
-Your apps in one conversation. Ask about anything you've logged, or tell Jarvis what you did and it logs it to the right app: BODY, MONEY, GYM, MEAL, WRITE, READ and SLEEP, plus the goals and weekly reviews in YOU. Same login as every other app.
+A command center for your Mac, and your apps in one conversation. Ask about anything you've logged, or tell Jarvis what you did and it logs it to the right app: BODY, MONEY, GYM, MEAL, WRITE, READ and SLEEP, plus the goals and weekly reviews in YOU. Same login as every other app.
 
 - **Ask:** "How did I sleep this week?", "What did I spend on food this month?", "Did I train less on short nights?", "Am I on pace for my goals?" Jarvis reads the apps a question needs and answers with your real numbers.
 - **Log:** "158.4 this morning", "spent 12 at Chipotle", "chicken bowl for lunch", "bench 3x8 at 135", "30 minutes on the treadmill, 3 miles", "read 20 pages", "today was an 8, great gym session". Each one lands in that app's own table, so it shows everywhere, the watch included. Jarvis tags what it logged under its answer.
 - **Voice:** the mic button (where the browser supports it) or your keyboard's dictation, and the speaker button reads answers out loud.
 
 Jarvis can't delete or change what's already logged; it tells you which app to do that in. It follows YOU's settings (time zone, when your day ends, units, theme).
+
+## The command center (made for the Mac)
+
+One screen, no scrolling at 1440×900 and up:
+
+- **Systems**: Claude, Jarvis's memory, voice, your seven apps, Notion and Google Calendar, each live or not.
+- **The core**: turns while Jarvis is standing by, speeds up while it thinks, pulses while it listens or speaks.
+- **Live feed**: your next event, apps not logged yet, a streak about to end, subscriptions renewing soon, last night's sleep, a weekly review that's ready. Click one to ask Jarvis about it.
+- **Your apps**: today's number for each app, whether it's logged, and a 7-day line. Click one to ask about it.
+- **Today's schedule**: today's Google Calendar events with Done, Now or In 42m.
+- **Today**: rings for apps logged, calories against your goal, and sleep against your goal.
+- **Memory**: messages, things Jarvis logged and days you talked, with a 14-day constellation.
+- **Streaks**: days in a row for each app, and your best.
+- **Bottom bar**: location (your time zone), the weather (Open-Meteo, only after you click it and allow your location), network, **Talk to Jarvis** and **Executive briefing**.
+
+The conversation slides in from the right. **⌘K** asks, **⌘J** talks (Safari or Chrome; allow the microphone once), **Esc** closes. Answers are read aloud; the speaker button in the conversation turns that off. **Focus mode** leaves just the core.
+
+**Install it on the Mac:** in Safari, open your Jarvis address, then **File → Add to Dock** (macOS Sonoma or later). In Chrome: **⋮ → Cast, save and share → Install page as app**. It opens in its own window like an app. On a phone the panels stack and everything still works.
 
 ## Set up (about 5 minutes)
 
@@ -19,7 +37,11 @@ Jarvis can't delete or change what's already logged; it tells you which app to d
 
 `api/jarvis.mjs` is a Vercel function. It checks your sign-in, reads your settings and the last few messages, and runs Claude with a set of tools: `read_app_data` for each app, and `log_weight`, `log_expense`, `log_meal`, `rate_day`, `log_pages`, `log_cardio` and `log_sets`. Every tool calls Supabase with your own sign-in, so row security keeps it to your data. Tool inputs are checked before anything is written.
 
-- `index.html`, `jarvis.js` — the chat
+- `index.html` — the command center
+- `jarvis.js` — sign-in, the conversation, voice and shortcuts
+- `dashboard.js` — the panels, the core, the clock and the bottom bar
+- `api/today.mjs` — which services are connected, and today's calendar
+- `lib/core.mjs` — Supabase as you, and your day from YOU's settings
 - `api/jarvis.mjs` — Jarvis and its tools
 - `lib/notion.mjs` — the Notion tools
 - `lib/gcal.mjs` — the Google Calendar tools
