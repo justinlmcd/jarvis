@@ -135,12 +135,34 @@ let speakOn=true; try{ speakOn=localStorage.getItem(SPEAK_KEY)!=='0'; }catch{}
 const syncSpeak=()=>$('speak').setAttribute('aria-pressed',String(speakOn)); syncSpeak();
 if(!('speechSynthesis' in window)){ $('speak').hidden=true; speakOn=false; }
 $('speak').onclick=()=>{ speakOn=!speakOn; syncSpeak(); try{ localStorage.setItem(SPEAK_KEY,speakOn?'1':'0'); }catch{} if(!speakOn){ speechSynthesis.cancel(); state('idle'); } };
+// The voice: a British man, the best one this Mac has. Chrome's "Google UK English Male" first, then macOS's
+// Daniel (Premium or Enhanced if you've downloaded them), then other UK male voices, then any UK English voice.
+// Your pick in the conversation panel wins.
+const VOICE_KEY='jarvis.voice';
+const BRITISH=[/^Google UK English Male$/i,/^Daniel \(Premium\)/i,/^Daniel \(Enhanced\)/i,/^Daniel\b/i,/^Arthur\b/i,/^Oliver\b/i,/^Jamie\b/i,/^Malcolm\b/i,/^Microsoft (Ryan|George|Thomas|Alfie)/i];
+const gb=v=>/^en[-_]GB/i.test(v.lang);
+function voices(){ return 'speechSynthesis' in window?speechSynthesis.getVoices():[]; }
+function bestVoice(){
+  const all=voices(); let saved=''; try{ saved=localStorage.getItem(VOICE_KEY)||''; }catch{}
+  if(saved){ const v=all.find(x=>x.name===saved); if(v) return v; }
+  for(const re of BRITISH){ const v=all.find(x=>re.test(x.name)&&(gb(x)||/Google UK/i.test(x.name))); if(v) return v; }
+  return all.find(gb)||all.find(v=>v.lang===(navigator.language||'en-US'))||null;
+}
+function fillVoices(){
+  const sel=$('voice-pick'); if(!sel) return; const all=voices().filter(v=>/^en/i.test(v.lang)); if(!all.length){ sel.hidden=true; return; }
+  const cur=bestVoice(); sel.hidden=false;
+  const order=v=>{ const i=BRITISH.findIndex(re=>re.test(v.name)); return (i<0?BRITISH.length:i)+(gb(v)||/Google UK/i.test(v.name)?0:100); };
+  sel.innerHTML=all.sort((a,b)=>order(a)-order(b)||a.name.localeCompare(b.name)).map(v=>`<option value="${esc(v.name)}"${v===cur?' selected':''}>${esc(v.name)}${gb(v)?' · UK':''}</option>`).join('');
+}
+if('speechSynthesis' in window){ fillVoices(); speechSynthesis.addEventListener?.('voiceschanged',fillVoices); }
+$('voice-pick')?.addEventListener('change',e=>{ try{ localStorage.setItem(VOICE_KEY,e.target.value); }catch{} speakOn=true; syncSpeak(); speak('Good evening. Jarvis at your service.'); });
 function speak(text){
   if(!speakOn||!('speechSynthesis' in window)){ state('idle'); return; }
   speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(String(text).replace(/\*\*/g,'').replace(/^\s*[-•*]\s+/gm,'').replace(/https?:\/\/\S+/g,'')); u.rate=1.05;
-  const voices=speechSynthesis.getVoices(), pick=voices.find(v=>/Daniel|Arthur|Oliver/.test(v.name)&&v.lang.startsWith('en'))||voices.find(v=>v.lang===(navigator.language||'en-US'));
-  if(pick) u.voice=pick;
+  const u=new SpeechSynthesisUtterance(String(text).replace(/\*\*/g,'').replace(/^\s*[-•*]\s+/gm,'').replace(/https?:\/\/\S+/g,''));
+  const v=bestVoice(); if(v){ u.voice=v; u.lang=v.lang; }
+  // Measured and a touch low: calm, not chirpy.
+  u.rate=.96; u.pitch=.9;
   u.onstart=()=>state('speaking'); u.onend=u.onerror=()=>state('idle');
   speechSynthesis.speak(u);
 }

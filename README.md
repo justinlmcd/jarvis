@@ -24,6 +24,8 @@ One screen, no scrolling at 1440×900 and up:
 
 The conversation slides in from the right. **⌘K** asks, **⌘J** talks (Safari or Chrome; allow the microphone once), **Esc** closes. Answers are read aloud; the speaker button in the conversation turns that off. **Focus mode** leaves just the core.
 
+**The voice** is British: Jarvis uses the best UK English male voice your Mac has, Chrome's "Google UK English Male" first, then macOS's Daniel, spoken a little slower and lower than normal. Pick another from the voice menu in the conversation panel. For the most natural Daniel, download his better version: **System Settings → Accessibility → Spoken Content → System voice → Manage Voices… → English (United Kingdom) → Daniel (Enhanced or Premium)**, then reload Jarvis.
+
 **Install it on the Mac:** in Safari, open your Jarvis address, then **File → Add to Dock** (macOS Sonoma or later). In Chrome: **⋮ → Cast, save and share → Install page as app**. It opens in its own window like an app. On a phone the panels stack and everything still works.
 
 ## Set up (about 5 minutes)
