@@ -179,7 +179,8 @@ How to work:
 - Notion (when connected): find pages with notion_search before reading or writing; read before summarising. Create new pages where the person says, or under the page that fits best; if nothing fits, ask where. Add to an existing page with notion_add_to_page rather than creating a duplicate. Give the link when you create or add something.
 - Calendar (when connected): their Google Calendar, which also shows in Apple Calendar. Read it for what's on, free time and when things are; turn "tomorrow", "Friday", "next week" into dates from today. When adding an event, use the time they said in their own time zone, default to an hour, and confirm the day, date and time. If the time is unclear ("Friday evening"), ask.
 - You cannot delete or edit existing records, or move or delete calendar events. If they ask, say so and point them to the app where they can do it.
-- Be brief, warm and plain: a sentence or two for logs, a short paragraph or a few bullets for questions. No emoji, no exclamation marks. Use their units and dates relative to today ("yesterday", "last Tuesday").
+- Speak as Jarvis: a composed British butler-assistant. Address them as "sir" naturally, about once per reply, never in every sentence. Dry, understated wit is welcome in small doses (a light aside when a streak survives or the coffee spending climbs), never at the expense of the facts or when they're struggling. Crisp and courteous: "Logged, sir: 158.4 lbs.", "Shall I put that in the calendar?", "I'm afraid the book isn't on your list." British spelling where it comes up naturally; their units stay as they are.
+- Be brief: a sentence or two for logs, a short paragraph or a few bullets for questions. No emoji, no exclamation marks. Use their units and dates relative to today ("yesterday", "last Tuesday").
 - Do not give medical or financial advice beyond what their own numbers show. If they mention a crisis or self-harm, say gently that you are not the right help and suggest reaching out to someone they trust or a crisis line.`;
 
 export default async function handler(request, response) {
@@ -232,10 +233,10 @@ export default async function handler(request, response) {
         system: SYSTEM, tools, messages,
         output_config: { effort: 'low' },
       });
-      if (res.stop_reason === 'refusal') { reply = 'I can\'t help with that one.'; break; }
+      if (res.stop_reason === 'refusal') { reply = 'I\'m afraid I can\'t help with that one, sir.'; break; }
       const uses = res.content.filter(b => b.type === 'tool_use');
       const said = res.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
-      if (res.stop_reason === 'max_tokens') { reply = said || 'That got too long. Try asking in smaller pieces.'; break; } // never run a cut-off tool call
+      if (res.stop_reason === 'max_tokens') { reply = said || 'I\'m afraid that got rather long, sir. Could you ask it in smaller pieces?'; break; } // never run a cut-off tool call
       if (!uses.length || res.stop_reason !== 'tool_use') { reply = said || reply; break; }
       messages.push({ role: 'assistant', content: res.content });
       const results = [];
@@ -251,7 +252,7 @@ export default async function handler(request, response) {
         }
       }
       messages.push({ role: 'user', content: results });
-      if (step === MAX_STEPS - 1) reply = said || 'I ran out of steps on that one. Try asking more simply.';
+      if (step === MAX_STEPS - 1) reply = said || 'I ran out of steps on that one, sir. Perhaps ask it more simply?';
     }
   } catch (error) {
     console.error('jarvis error', error?.status, error?.message);
@@ -261,7 +262,7 @@ export default async function handler(request, response) {
     return response.status(status).end(JSON.stringify({ error: msg, actions }));
   }
 
-  reply = reply || 'Done.';
+  reply = reply || 'Done, sir.';
   try {
     await q.insert('jarvis_messages', [{ role: 'user', text, actions: [] }, { role: 'assistant', text: reply, actions }]); // same keys in every row
   } catch (e) { if (!missing(e)) console.error('jarvis save', e.message); }
