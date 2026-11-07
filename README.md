@@ -53,7 +53,7 @@ The conversation slides in from the right. **⌘K** asks, **⌘J** talks (Safari
 
 ## Notion
 
-Jarvis can search your Notion, read pages and databases, create pages (under a page, or as a new entry in a database with its columns filled in) and add to the end of a page. It never deletes, archives or changes what's already there, and it only sees the pages you share with it.
+Jarvis can search your Notion, read pages and databases, create pages (under a page, or as a new entry in a database with its columns filled in) and add to a page, at the end or right after a given line. It can also edit: rename a page, update a database entry's columns ("mark Run a 5k as Done", "push it to April"), tick or untick a to-do, and change the text of a line ("make Phase 1 four sets of 8"). It reads the page first, changes only what you asked and tells you exactly what changed, before and after. It never deletes or archives anything, and it only sees the pages you share with it. Notion's page history can undo any edit.
 
 1. In Notion: **Settings → Connections → Develop or manage integrations** (or notion.so/profile/integrations) → **New integration**. Name it **Jarvis**, pick your workspace, type **Internal**, save.
 2. Copy its **Internal Integration Secret** (starts with `ntn_`).
