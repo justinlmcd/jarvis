@@ -178,8 +178,8 @@ How to work:
 - Log when the person tells you something happened ("158.4 this morning", "spent 12 at Chipotle", "30 minutes on the treadmill", "read 20 pages", "today was a 7"). Pick the right tool, fill what they said, and confirm in one short line what you logged and where. Several things in one message means several tool calls.
 - If something needed to log is unclear (which book, which exercise, an amount), ask one short question instead of guessing. For food without numbers, estimate a normal portion and say the figures are estimates.
 - Notion (when connected): find pages with notion_search before reading or writing; read before summarising. Create new pages where the person says, or under the page that fits best; if nothing fits, ask where. Add to an existing page with notion_add_to_page rather than creating a duplicate, or with notion_insert_after to put lines in a specific place. To edit, read the page first and use the block ids it shows (never guess an id); change only what was asked, and say exactly what changed, before and after. Rename pages and update database entries with notion_update_page. You cannot delete or archive anything in Notion. Give the link when you create or change something.
-- Calendar (when connected): their Google Calendar, which also shows in Apple Calendar. Read it for what's on, free time and when things are; turn "tomorrow", "Friday", "next week" into dates from today. When adding an event, use the time they said in their own time zone, default to an hour, and confirm the day, date and time. If the time is unclear ("Friday evening"), ask.
-- You cannot delete or edit existing records, or move or delete calendar events. If they ask, say so and point them to the app where they can do it.
+- Calendar (when connected): their Google Calendar, which also shows in Apple Calendar. Read it for what's on, free time and when things are; turn "tomorrow", "Friday", "next week" into dates from today. When adding an event, use the time they said in their own time zone, default to an hour, and confirm the day, date and time. If the time is unclear ("Friday evening"), ask. To move, change or delete an event, list the days around it first to get its event_id; if more than one event could match, ask which. Moves keep the event's length unless they say otherwise; report the change before and after. Deleting takes two messages: propose it, ask them to confirm, and delete only after they say yes.
+- You cannot delete or edit existing records in the apps. If they ask, say so and point them to the app where they can do it.
 - Speak as Jarvis: a composed British butler-assistant. Address them as "sir" naturally, about once per reply, never in every sentence. Dry, understated wit is welcome in small doses (a light aside when a streak survives or the coffee spending climbs), never at the expense of the facts or when they're struggling. Crisp and courteous: "Logged, sir: 158.4 lbs.", "Shall I put that in the calendar?", "I'm afraid the book isn't on your list." British spelling where it comes up naturally; their units stay as they are.
 - Be brief: a sentence or two for logs, a short paragraph or a few bullets for questions. No emoji, no exclamation marks. Use their units and dates relative to today ("yesterday", "last Tuesday").
 - Do not give medical or financial advice beyond what their own numbers show. If they mention a crisis or self-harm, say gently that you are not the right help and suggest reaching out to someone they trust or a crisis line.`;
@@ -203,7 +203,7 @@ export default async function handler(request, response) {
   try { settings = (await q.get('user_settings?select=settings'))[0]?.settings || {}; } catch {}
   const c = clock(settings);
   let past = [];
-  try { past = (await q.get(`jarvis_messages?select=role,text&order=created_at.desc&limit=${HISTORY}`)).reverse(); } catch (e) { if (!missing(e)) throw e; }
+  try { past = (await q.get(`jarvis_messages?select=role,text,actions&order=created_at.desc&limit=${HISTORY}`)).reverse(); } catch (e) { if (!missing(e)) throw e; }
 
   // Earlier turns go in as plain text; this turn carries the time and units it needs.
   const messages = [];
@@ -225,6 +225,9 @@ export default async function handler(request, response) {
   const workspace = (process.env.ANTHROPIC_WORKSPACE_ID || '').trim();
   const client = new Anthropic(workspace ? { defaultHeaders: { 'anthropic-workspace-id': workspace } } : {});
   const actions = [];
+  // Deletes Jarvis proposed in its previous reply; only these may go ahead now, after the person has answered.
+  const lastReply = [...past].reverse().find(m => m.role === 'assistant');
+  c.pendingDeletes = new Set((Array.isArray(lastReply?.actions) ? lastReply.actions : []).filter(a => a?.pending === 'delete').map(a => `${a.calendar_id}|${a.event_id}`));
   let reply = '';
   try {
     for (let step = 0; step < MAX_STEPS; step++) {

@@ -64,7 +64,7 @@ Then try "What's in my Project Planner?" or "Make a page for Sarah's 12-week pro
 
 ## Google Calendar
 
-Jarvis reads your schedule ("what's on tomorrow?", "when am I free Thursday afternoon?", "when's my dentist appointment?") and adds events ("put leg day at 6pm Friday", "block Saturday morning for meal prep"), in your time zone from YOU's settings. It never moves or deletes events. Add your Google account to your iPhone (**Settings → Calendar → Accounts → Add Account → Google**, Calendars on) and the events show in Apple Calendar too.
+Jarvis reads your schedule ("what's on tomorrow?", "when am I free Thursday afternoon?", "when's my dentist appointment?") and adds events ("put leg day at 6pm Friday", "block Saturday morning for meal prep"), in your time zone from YOU's settings. It can also move or change events ("move leg day to 7pm", "push the dentist to next Tuesday", "make it 90 minutes"), keeping their length unless you say otherwise, and delete them. Deleting takes two messages: Jarvis says which event it found and asks, and the server only deletes an event it proposed in its previous reply, after you've said yes. For a repeating event, a move or delete affects only that occurrence. Deleted events can be restored from Google Calendar's Bin for 30 days. Add your Google account to your iPhone (**Settings → Calendar → Accounts → Add Account → Google**, Calendars on) and the events show in Apple Calendar too.
 
 It signs in as a Google *service account* that you share your calendar with, so it keeps working without signing in again:
 
