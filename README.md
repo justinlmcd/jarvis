@@ -24,6 +24,8 @@ One screen, no scrolling at 1440×900 and up:
 
 The conversation slides in from the right. **⌘K** asks, **⌘J** talks (Safari or Chrome; allow the microphone once), **Esc** closes. Answers are read aloud; the speaker button in the conversation turns that off. **Focus mode** leaves just the core.
 
+**“Hey Jarvis”.** Switch it on under Voice status in the sidebar and Jarvis keeps listening while its window is open, acting only on what follows "Hey Jarvis" (or "OK Jarvis"): say it in one go ("Hey Jarvis, what's on today?"), or say "Hey Jarvis", wait for the chime and "Yes, sir?", then ask. It pauses while Jarvis thinks and speaks so it never hears itself, and restarts itself when the browser stops it. The hearing is done by the browser's speech recognition (Chrome: Google's service; Safari: Apple's), so while it's on, what the microphone hears is sent there, and the Mac's orange microphone dot stays lit; switch it off whenever you like. It only works while the Jarvis window is open and the Mac is awake.
+
 **The voice** is British: Jarvis uses the best UK English male voice your Mac has, Chrome's "Google UK English Male" first, then macOS's Daniel, spoken a little slower and lower than normal. Pick another from the voice menu in the conversation panel. For the most natural Daniel, download his better version: **System Settings → Accessibility → Spoken Content → System voice → Manage Voices… → English (United Kingdom) → Daniel (Enhanced or Premium)**, then reload Jarvis.
 
 **Install it on the Mac:** in Safari, open your Jarvis address, then **File → Add to Dock** (macOS Sonoma or later). In Chrome: **⋮ → Cast, save and share → Install page as app**. It opens in its own window like an app. On a phone the panels stack and everything still works.
