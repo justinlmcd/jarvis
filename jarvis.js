@@ -40,7 +40,7 @@ function setUser(next){
   user=next||null; loadId++;
   $('connect-open').hidden=!!user; $('sign-out').hidden=!user; $('gate').hidden=!!user;
   $('who-sub').textContent=user?(user.email||'Signed in'):'Not signed in'; $('avatar').textContent=(user?.email||'J')[0].toUpperCase();
-  clearChat(); if(user){ window.youSettings?.sync(client); loadHistory(); }
+  clearChat(); if(user){ window.youSettings?.sync(client); loadHistory(); setTimeout(startWake,800); } else stopWake();
   emit('user',user);
 }
 async function token(){ const db=await connect(); const {data:{session}}=await db.auth.getSession(); return session?.access_token||null; }
@@ -80,7 +80,8 @@ async function loadHistory(){
   catch(err){ if(id===loadId&&!/does not exist|schema cache|could not find the table/i.test(err.message||'')) note(err.message||'Could not load the conversation.','error'); }
 }
 const note=(t,kind='')=>{ $('note').textContent=t; $('note').className='note'+(kind?' '+kind:''); };
-function state(s){ emit('state',s); $('core-state').textContent={idle:'STANDING BY',thinking:'PROCESSING',listening:'LISTENING',speaking:'SPEAKING'}[s]||s; }
+let voiceState='idle';
+function state(s){ voiceState=s; emit('state',s); $('core-state').textContent={idle:'STANDING BY',thinking:'PROCESSING',listening:'LISTENING',speaking:'SPEAKING'}[s]||s; }
 
 async function ask(text){
   text=String(text||'').trim(); if(!text) return;
@@ -116,6 +117,7 @@ let listening=null;
 function listen(){
   if(!user){ $('connection-dialog').showModal(); return; }
   if(listening){ listening.stop(); return; }
+  stopWake();
   if(!Recognition){ note('This browser can\'t hear you. Use Safari or Chrome, or type.','error'); openDrawer(); return; }
   speechSynthesis?.cancel();
   const rec=new Recognition(); rec.lang=navigator.language||'en-US'; rec.interimResults=true; rec.maxAlternatives=1;
@@ -127,9 +129,62 @@ function listen(){
 }
 function setListening(on){
   for(const id of ['voice','talk']) $(id).classList.toggle('live',on); $('mic').classList.toggle('live',on);
-  $('voice-state').textContent=on?'Listening…':'Ready'; $('talk-state').textContent=on?'Listening… click to stop':'Press ⌘J or click';
+  $('voice-state').textContent=on?'Listening…':idleText(); $('talk-state').textContent=on?'Listening… click to stop':idleTalk();
 }
+const idleText=()=>wakeOn&&wakeRec?'Say “Hey Jarvis”':'Ready';
+const idleTalk=()=>wakeOn&&wakeRec?'Say “Hey Jarvis” or press ⌘J':'Press ⌘J or click';
+
+// ---- "Hey Jarvis": while switched on, Jarvis keeps listening and acts only on what follows the wake phrase ----
+// The browser's speech recognition does the hearing (Chrome: Google's service; Safari: Apple's), so it is off until
+// you switch it on. It pauses while Jarvis thinks or speaks, so it never hears itself, and restarts when the browser
+// stops it (Chrome does about once a minute).
+const WAKE_KEY='jarvis.wake';
+const WAKE=/\b(?:(?:hey|hi|ok|okay|yo)[\s,]+)?jarvis\b[\s,.!?]*/i;
+let wakeOn=false, wakeRec=null, wakeRestart=null, armedUntil=0, wakeFails=0;
+try{ wakeOn=localStorage.getItem(WAKE_KEY)==='1'; }catch{}
+function chime(){ try{ const a=new (window.AudioContext||window.webkitAudioContext)(), t=a.currentTime;
+  for(const [f,d] of [[660,0],[990,.09]]){ const o=a.createOscillator(), g=a.createGain(); o.frequency.value=f; o.type='sine'; g.gain.setValueAtTime(.0001,t+d); g.gain.exponentialRampToValueAtTime(.12,t+d+.02); g.gain.exponentialRampToValueAtTime(.0001,t+d+.16); o.connect(g).connect(a.destination); o.start(t+d); o.stop(t+d+.18); }
+  setTimeout(()=>a.close(),600); }catch{} }
+function syncWake(){
+  const b=$('wake'); if(!b) return; b.hidden=!Recognition; b.setAttribute('aria-pressed',String(wakeOn));
+  b.textContent=wakeOn?(wakeRec?'“Hey Jarvis” · On':'“Hey Jarvis” · On (paused)'):'“Hey Jarvis” · Off';
+  $('voice').classList.toggle('wake',wakeOn&&!!wakeRec);
+  if(!listening){ $('voice-state').textContent=armedUntil>Date.now()?'Yes, sir?':idleText(); $('talk-state').textContent=idleTalk(); }
+}
+function heard(cmd){ armedUntil=0; stopWake(); ask(cmd); }
+function startWake(){
+  clearTimeout(wakeRestart);
+  if(!wakeOn||!user||!Recognition||wakeRec||listening||voiceState==='thinking'||voiceState==='speaking'||busy) return;
+  const rec=new Recognition(); rec.lang=navigator.language||'en-US'; rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=1;
+  rec.onresult=e=>{ wakeFails=0;
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const r=e.results[i], text=r[0].transcript.trim(); if(!text) continue;
+      if(armedUntil>Date.now()){ if(r.isFinal){ heard(text.replace(WAKE,'').trim()||text); return; } $('voice-state').textContent=text.slice(-60); continue; }
+      const m=WAKE.exec(text); if(!m) continue;
+      const rest=text.slice(m.index+m[0].length).trim();
+      if(!r.isFinal){ $('voice-state').textContent='…'; continue; }
+      if(rest.length>2){ chime(); heard(rest); return; }
+      // Just the wake phrase: chime and wait for the request.
+      chime(); armedUntil=Date.now()+8000; state('listening'); syncWake();
+      setTimeout(()=>{ if(armedUntil&&armedUntil<=Date.now()){ armedUntil=0; if(voiceState==='listening') state('idle'); syncWake(); } },8100);
+    }
+  };
+  rec.onerror=e=>{ if(e.error==='not-allowed'||e.error==='service-not-allowed'){ wakeFails=99; note('Allow the microphone for this site, then switch “Hey Jarvis” on again.','error'); setWake(false); }
+    else if(e.error!=='no-speech'&&e.error!=='aborted') wakeFails++; };
+  rec.onend=()=>{ if(wakeRec===rec) wakeRec=null; syncWake();
+    if(wakeOn&&wakeFails<6) wakeRestart=setTimeout(startWake,wakeFails?Math.min(15000,1000*2**wakeFails):300);
+    else if(wakeOn&&wakeFails>=6&&wakeFails<99) note('“Hey Jarvis” keeps stopping. Check your connection; it will try again when you click it.','error'); };
+  try{ rec.start(); wakeRec=rec; }catch{ wakeRestart=setTimeout(startWake,1000); }
+  syncWake();
+}
+function stopWake(){ clearTimeout(wakeRestart); const r=wakeRec; wakeRec=null; armedUntil=0; try{ r?.abort(); }catch{} syncWake(); }
+function setWake(on){ wakeOn=on; try{ localStorage.setItem(WAKE_KEY,on?'1':'0'); }catch{} wakeFails=0; if(on) startWake(); else stopWake(); syncWake(); }
+// Resume after Jarvis has answered (a moment after it stops speaking), and when the window comes back.
+listeners.state=(listeners.state||[]).concat(s=>{ if(s==='thinking'||s==='speaking') stopWake(); else if(s==='idle'&&wakeOn) wakeRestart=setTimeout(startWake,700); });
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&wakeOn) startWake(); });
 for(const id of ['mic','mic-big','talk','cmd-voice']) $(id).onclick=listen;
+$('wake').onclick=()=>{ if(!user){ $('connection-dialog').showModal(); return; } wakeFails=0; setWake(!wakeOn||!wakeRec?true:false); };
+syncWake();
 const SPEAK_KEY='jarvis.speak';
 let speakOn=true; try{ speakOn=localStorage.getItem(SPEAK_KEY)!=='0'; }catch{}
 const syncSpeak=()=>$('speak').setAttribute('aria-pressed',String(speakOn)); syncSpeak();

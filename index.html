@@ -45,6 +45,8 @@ button,input,textarea{font:inherit;color:inherit}button{cursor:pointer;backgroun
 .mic-big{width:74px;height:74px;border-radius:50%;margin:0 auto 6px;display:grid;place-items:center;background:radial-gradient(circle,rgba(47,216,255,.35),rgba(10,40,64,.9) 65%);border:1px solid var(--cyan);box-shadow:0 0 24px var(--glow),inset 0 0 18px var(--glow)}
 .mic-big svg{width:28px;height:28px}.voice.live .mic-big{animation:ring 1.4s infinite}@keyframes ring{50%{box-shadow:0 0 0 10px rgba(47,216,255,.08),0 0 34px var(--glow)}}
 .voice small{display:block;color:var(--faint);font-size:11px}
+.wake-btn{display:block;width:100%;margin-top:10px;border:1px solid var(--line2);border-radius:8px;padding:7px;font-size:12px;color:var(--muted)}.wake-btn[aria-pressed=true]{color:var(--cyan);border-color:var(--cyan);box-shadow:0 0 12px var(--glow)}
+.voice.wake .wave i{animation:idlewave 2.4s ease-in-out infinite;opacity:.35}.voice.wake .wave i:nth-child(even){animation-delay:.6s}@keyframes idlewave{50%{height:11px}}
 .focus{border:1px solid var(--line2);border-radius:9px;padding:9px;font-size:12.5px;color:var(--muted)}.focus:hover{color:var(--ink);border-color:var(--cyan)}
 /* main */
 .main{display:flex;flex-direction:column;min-width:0;min-height:0}
@@ -164,6 +166,7 @@ body.focus .grid>.panel:not(.core){display:none}body.focus .grid>.core{grid-colu
       <p id="voice-state">Ready</p>
       <button class="mic-big" id="mic-big" type="button" aria-label="Talk to Jarvis"><svg viewBox="0 0 24 24" fill="none"><rect x="9" y="3.5" width="6" height="11" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
       <small>⌘J to talk</small>
+      <button class="wake-btn" id="wake" type="button" aria-pressed="false" title="Keep listening for “Hey Jarvis”">“Hey Jarvis” · Off</button>
     </section>
     <button class="focus" id="focus" type="button" aria-pressed="false">◎ Focus mode</button>
   </aside>
